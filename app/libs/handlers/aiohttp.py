@@ -4,45 +4,45 @@ from bs4 import BeautifulSoup as Bs
 import aiohttp
 
 
-async def get_author_publications_api(first_name, last_name):
+async def get_author_publications_api(session, first_name, last_name):
     base_url = 'https://dblp.org/search/publ/api?q='
     url = f'{base_url}{last_name}+{first_name}&format=json'
-    async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
-            result = await response.json()
-            result = result.get('result')
-            hits = result.get('hits').get('hit')
-            hits_data = []
-            if hits:
-                _authors = set()
-                publications_count = len(hits)
-                for hit in hits:
-                    info = hit.get('info')
-                    authors = info.get('authors')
-                    title = info.get('title')
-                    year = info.get('year')
-                    type = info.get('type')
-                    doi = info.get('doi')
-                    ee = info.get('ee')
-                    url = info.get('url')
 
-                    for author in authors.get('author'):
-                        _authors.add(author.get('text'))
+    async with session.get(url) as response:
+        result = await response.json()
+        result = result.get('result')
+        hits = result.get('hits').get('hit')
+        publications_data = []
+        if hits:
+            _authors = set()
+            publications_count = len(hits)
+            for hit in hits:
+                info = hit.get('info')
+                authors = info.get('authors')
+                title = info.get('title')
+                year = info.get('year')
+                type = info.get('type')
+                doi = info.get('doi')
+                ee = info.get('ee')
+                url = info.get('url')
 
-                authors_count = len(_authors)
-                hits_data.append({'publications_count': publications_count,
-                                  'authors_count': authors_count})
+                for author in authors.get('author'):
+                    _authors.add(author.get('text'))
 
-                    # hits_data.append({'title': title,
-                    #                     'authors': authors,
-                    #                   'year': year,
-                    #                   'type': type,
-                    #                   'doi': doi,
-                    #                   'ee': ee,
-                    #                   'url': url})
-                return hits_data
-            else:
-                return None
+            authors_count = len(_authors)
+            publications_data.append({'publications_count': publications_count,
+                              'authors_count': authors_count})
+
+                # hits_data.append({'title': title,
+                #                     'authors': authors,
+                #                   'year': year,
+                #                   'type': type,
+                #                   'doi': doi,
+                #                   'ee': ee,
+                #                   'url': url})
+            return publications_data
+        else:
+            return None
 
 
 async def get_author_api_json(first_name, last_name):
@@ -61,10 +61,12 @@ async def get_author_api_json(first_name, last_name):
                     url = info.get('url')
                     aliases = info.get('aliases')
                     links = await author_page_parser(session=session, url=url)
+                    publications_data = await get_author_publications_api(session=session, first_name=first_name, last_name=last_name)
                     hits_data.append({'author': author,
                                       'url': url,
                                       'aliases': aliases,
-                                      'links': links})
+                                      'links': links,
+                                      'publications_data': publications_data})
                 return hits_data
             else:
                 return None
