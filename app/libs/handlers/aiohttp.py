@@ -1,14 +1,25 @@
+from asyncio import gather
 import asyncio
-from pprint import pprint
+from wsgiref import headers
 from bs4 import BeautifulSoup as Bs
 import aiohttp
+import random
 
+
+import json
+
+
+useragents = open('useragents.txt').read().splitlines()
 
 async def get_author_publications_api(session, name):
     base_url = 'https://dblp.org/search/publ/api?q='
     url = f'{base_url}{name}&format=json'
-
-    async with session.get(url) as response:
+    useragent = random.choice(useragents)
+    headers = {
+        "User-Agent": useragent
+    }
+    
+    async with session.request(method = "GET", url=url,headers=headers ) as response:
         result = await response.json()
         result = result.get('result')
         hits = result.get('hits').get('hit')
@@ -25,9 +36,9 @@ async def get_author_publications_api(session, name):
                 doi = info.get('doi')
                 ee = info.get('ee')
                 url = info.get('url')
-
-                for author in authors.get('author'):
-                    _authors.add(author.get('text'))
+                
+                # for author in authors.get('author'):
+                #     _authors.add(author.get('text'))
 
             authors_count = len(_authors)
             publications_data.append({'publications_count': publications_count,
@@ -48,8 +59,12 @@ async def get_author_publications_api(session, name):
 async def get_author_api_json(name:str):
     base_url = 'https://dblp.org/search/author/api?q='
     url = f'{base_url}{name}&format=json'
+    useragent = random.choice(useragents)
+    headers = {
+        "User-Agent": useragent
+    }
     async with aiohttp.ClientSession() as session:
-        async with session.get(url) as response:
+        async with session.request(method = "GET", url=url,headers=headers) as response:
             result = await response.json()
             result = result.get('result')
             hits = result.get('hits').get('hit')
@@ -99,6 +114,25 @@ async def author_page_parser(session, url):
             return links
 
 
-
-
-
+async def author_find_sa(query:str):
+    
+    base_url = f'https://dblp.uni-trier.de/search/publ/api?callback=jQuery311020347957983698262_1663843905617&q={query}&compl=author&p=2&h=0&c=10&rw=2d&format=json&_=1663843905618'
+    useragent = random.choice(useragents)
+    headers = {
+        "User-Agent": useragent
+    }
+    
+    async with aiohttp.ClientSession() as session:
+        async with session.request(method="GET",url=base_url,headers=headers) as response:
+            html = await response.text()
+            _json = json.loads(html)
+            # return _json
+            tasks = []
+            for author in _json['result']['completions']['c']:
+                text = author["text"].replace(":facet:author:","")
+                print(text)
+                task = asyncio.ensure_future(get_author_api_json(name = text))
+                tasks.append(task)
+                
+            results = await asyncio.gather(*tasks)
+            return results
