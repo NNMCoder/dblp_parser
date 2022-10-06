@@ -24,4 +24,7 @@ async def get_journal_info(name: str):
     summary=''
 )
 async def get_author_subject_area(query:str):
-    return await author_find_sa(query=query)
+    results = await author_find_sa(query=query)
+    if not results:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authors not found")
+    return results
