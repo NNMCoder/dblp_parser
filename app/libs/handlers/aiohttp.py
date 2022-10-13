@@ -29,16 +29,19 @@ async def get_author_publications_api(session, name):
             publications_count = len(hits)
             for hit in hits:
                 info = hit.get('info')
-                authors = info.get('authors')
+                authors = info.get('authors').get('author')
                 title = info.get('title')
                 year = info.get('year')
-                type = info.get('type')
+                _type = info.get('type')
                 doi = info.get('doi')
                 ee = info.get('ee')
                 url = info.get('url')
-                
-                # for author in authors.get('author'):
-                #     _authors.add(author.get('text'))
+             
+
+                for author in authors:
+                    if isinstance(author, dict):
+                        _authors.add(author.get('text'))
+                    
 
             authors_count = len(_authors)
             publications_data.append({'publications_count': publications_count,
@@ -47,7 +50,7 @@ async def get_author_publications_api(session, name):
                 # hits_data.append({'title': title,
                 #                     'authors': authors,
                 #                   'year': year,
-                #                   'type': type,
+                #                   'type': _type,
                 #                   'doi': doi,
                 #                   'ee': ee,
                 #                   'url': url})
@@ -130,7 +133,7 @@ async def author_find_sa(query:str):
             tasks = []
             for author in _json['result']['completions']['c']:
                 text = author["text"].replace(":facet:author:","")
-                print(text)
+                
                 task = asyncio.ensure_future(get_author_api_json(name = text))
                 tasks.append(task)
                 
