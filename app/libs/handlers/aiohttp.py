@@ -1,6 +1,6 @@
-from asyncio import gather
+
 import asyncio
-from wsgiref import headers
+
 from bs4 import BeautifulSoup as Bs
 import aiohttp
 import random
@@ -10,6 +10,24 @@ import json
 
 
 useragents = open('useragents.txt').read().splitlines()
+
+async def get_h_index_and_cited_count_from_scholar(session, name):
+    base_url = 'https://scholar.google.ru/'
+    url = f'{base_url}citations?hl=ru&view_op=search_authors&mauthors={name}'
+    useragent = random.choice(useragents)
+    headers = {'User_agent': useragent}
+    h_index, cited_count = None, None
+    async with session.request(method='GET', url=url, headers=headers) as response:
+        html = await response.text()
+        soup = Bs(html, 'html.parser')
+        link = soup.select_one('#gsc_sa_ccl > div > div > div > h3 > a')
+        if link:
+            async with session.request(method='GET', url=base_url+link.get('href'), headers=headers) as response:
+                html = await response.text()
+                soup = Bs(html, 'html.parser')
+                cited_count = soup.select_one('#gsc_rsb_st > tbody > tr:nth-child(1) > td:nth-child(2)').text
+                h_index = soup.select_one('#gsc_rsb_st > tbody > tr:nth-child(2) > td:nth-child(2)').text
+        return h_index, cited_count
 
 async def get_author_publications_api(session, name):
     base_url = 'https://dblp.org/search/publ/api?q='
@@ -82,11 +100,14 @@ async def get_author_api_json(name:str):
 
                     links = await author_page_parser(session=session, url=url)
                     publications_data = await get_author_publications_api(session=session, name=name)
+                    h_index, cited_count = await get_h_index_and_cited_count_from_scholar(session=session, name=name.replace('_', ' '))
                     
                     hits_data.append({'author': author,
                                       'url': url,
                                       'aliases': aliases,
                                       'links': links,
+                                      'h_index': h_index,
+                                      'cited_count': cited_count,
                                       'publications_data': publications_data})
                 
                 return hits_data
@@ -133,7 +154,7 @@ async def author_find_sa(query:str):
             tasks = []
             for author in _json['result']['completions']['c']:
                 text = author["text"].replace(":facet:author:","")
-                
+
                 task = asyncio.ensure_future(get_author_api_json(name = text))
                 tasks.append(task)
                 
