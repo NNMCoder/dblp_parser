@@ -36,46 +36,50 @@ async def get_author_publications_api(session, name):
     headers = {
         "User-Agent": useragent
     }
-    
-    async with session.request(method = "GET", url=url,headers=headers ) as response:
-        result = await response.json()
-        result = result.get('result')
-        hits = result.get('hits').get('hit')
-        publications_data = []
-        if hits:
-            _authors = set()
-            publications_count = len(hits)
-            for hit in hits:
-                info = hit.get('info')
-                authors = info.get('authors').get('author')
-                title = info.get('title')
-                year = info.get('year')
-                _type = info.get('type')
-                doi = info.get('doi')
-                ee = info.get('ee')
-                url = info.get('url')
-             
+    try:
+        async with session.request(method = "GET", url=url, headers=headers ) as response:
 
-                for author in authors:
-                    if isinstance(author, dict):
-                        _authors.add(author.get('text'))
-                    
 
-            authors_count = len(_authors)
-            publications_data.append({'publications_count': publications_count,
-                              'authors_count': authors_count})
+            result = await response.json()
+            result = result.get('result')
+            hits = result.get('hits').get('hit')
+            publications_data = []
+            if hits:
+                _authors = set()
+                publications_count = len(hits)
+                for hit in hits:
+                    info = hit.get('info')
+                    authors = info.get('authors').get('author')
+                    title = info.get('title')
+                    year = info.get('year')
+                    _type = info.get('type')
+                    doi = info.get('doi')
+                    ee = info.get('ee')
+                    url = info.get('url')
 
-                # hits_data.append({'title': title,
-                #                     'authors': authors,
-                #                   'year': year,
-                #                   'type': _type,
-                #                   'doi': doi,
-                #                   'ee': ee,
-                #                   'url': url})
-            return publications_data
-        else:
-            return None
 
+                    for author in authors:
+                        if isinstance(author, dict):
+                            _authors.add(author.get('text'))
+
+
+                authors_count = len(_authors)
+                publications_data.append({'publications_count': publications_count,
+                                  'authors_count': authors_count})
+
+                    # hits_data.append({'title': title,
+                    #                     'authors': authors,
+                    #                   'year': year,
+                    #                   'type': _type,
+                    #                   'doi': doi,
+                    #                   'ee': ee,
+                    #                   'url': url})
+                return publications_data
+            else:
+                return None
+    except BaseException as exc:
+        print(name)
+        print(exc)
 
 async def get_author_api_json(name:str):
     base_url = 'https://dblp.org/search/author/api?q='
