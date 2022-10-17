@@ -139,8 +139,8 @@ async def author_page_parser(session, url):
 
 
 async def author_find_sa(query:str):
-    
-    base_url = f'https://dblp.uni-trier.de/search/publ/api?callback=jQuery311020347957983698262_1663843905617&q={query}&compl=author&p=2&h=0&c=10&rw=2d&format=json&_=1663843905618'
+    #            https://dblp.org/search/publ/api?callback=jQuery311035368939966605284_1665862409501&q=specom&compl=author&p=2&h=0&c=10&rw=2d&format=jsonp&_=1665862409526
+    base_url = f'https://dblp.org/search/publ/api?callback=jQuery311035368939966605284_1665862409501&q={query}&compl=author&p=2&h=0&c=10&rw=2d&format=json&_=1665862409526'
     useragent = random.choice(useragents)
     headers = {
         "User-Agent": useragent
