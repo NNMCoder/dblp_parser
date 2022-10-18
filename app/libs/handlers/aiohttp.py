@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup as Bs
 import aiohttp
 import random
 
-
+from app.libs.MySQL.crud import update_author_info_db
 import json
 
 
@@ -165,4 +165,5 @@ async def author_find_sa(query:str):
                 tasks.append(task)
                 
             results = await asyncio.gather(*tasks)
+
             return results

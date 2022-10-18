@@ -33,8 +33,9 @@ class DBRequests:
     '''
 
     update_author_info = '''
-            UPDATE scopus_author
-            SET eid = "%s",
+            INSERT INTO scopus_author
+            SET id = %s,
+                eid = "%s",
                 documents_count = %s,
                 cited_by_count = %s,
                 citation_count = %s,
@@ -47,8 +48,12 @@ class DBRequests:
                 publication_end = %s,
                 current_affiliation_id = %s,
                 last_update = %s,
-                orcid_id = %s
-            WHERE id = %s
+                orcid_id = %s,
+                first_name = %s,
+                last_name = %s,
+                url = %s
+                
+           
         '''
 
     insert_affiliation = '''

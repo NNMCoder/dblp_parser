@@ -1,6 +1,10 @@
 import asyncio
+from random import randint
+
 from fastapi import APIRouter, HTTPException
 from starlette import status
+
+from app.libs.MySQL.crud import update_author_info_db
 from app.schemas.schemas import BaseQuery
 
 from app.libs.handlers.aiohttp import get_author_api_json, author_find_sa
@@ -34,7 +38,27 @@ async def get_author_subject_area(query: BaseQuery):
         tasks.append(task)
 
     results = await asyncio.gather(*tasks)
-    
+
     if not results:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Authors not found")
+    for result in results[0]:
+        update_author_info_db((randint(1,9999),
+                               '',
+                               None,
+                               result[0].get('cited_count'),
+                               None,
+                               result[0].get('h_index'),
+                               result[0].get('authors_count'),
+                               None,
+                               None,
+                               None,
+                               None,
+                               None,
+                               None,
+                               None,
+                               result[0].get('links').get('orcid'),
+                               result[0].get('author'),
+                               result[0].get('author'),
+                               result[0].get('url')
+                               ))
     return results
