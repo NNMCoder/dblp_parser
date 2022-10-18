@@ -104,8 +104,10 @@ async def get_author_api_json(name:str):
 
                     links = await author_page_parser(session=session, url=url)
                     publications_data = await get_author_publications_api(session=session, name=name)
-                    h_index, cited_count = await get_h_index_and_cited_count_from_scholar(session=session, name=name.replace('_', ' '))
-                    
+                    try:
+                        h_index, cited_count = await get_h_index_and_cited_count_from_scholar(session=session, name=name.replace('_', ' '))
+                    except:
+                        h_index, cited_count = None, None
                     hits_data.append({'author': author,
                                       'url': url,
                                       'aliases': aliases,
