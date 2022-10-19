@@ -1,4 +1,5 @@
 import asyncio
+import json
 from random import randint
 
 from fastapi import APIRouter, HTTPException
@@ -8,7 +9,11 @@ from app.libs.MySQL.crud import update_author_info_db
 from app.schemas.schemas import BaseQuery
 
 from app.libs.handlers.aiohttp import get_author_api_json, author_find_sa
+import aiohttp
 
+from app.settings import Settings
+
+settings = Settings()
 
 dblp_router = APIRouter(tags=['dbpl'])
 
@@ -31,10 +36,10 @@ async def get_journal_info(name: str):
 )
 async def get_author_subject_area(query: BaseQuery):
     # results = await author_find_sa(query=query.required_keywords)
-    print(query.required_keywords)
+    print(query.query_id)
     tasks = []
-    for query in query.required_keywords:
-        task = asyncio.ensure_future(author_find_sa(query=query))
+    for _query in query.required_keywords:
+        task = asyncio.ensure_future(author_find_sa(query=_query))
         tasks.append(task)
 
     results = await asyncio.gather(*tasks)
@@ -44,7 +49,7 @@ async def get_author_subject_area(query: BaseQuery):
     for result_one in results:
         for result in result_one:
             update_author_info_db((randint(1,9999),
-                               '',
+                               None,
                                None,
                                result[0].get('cited_count'),
                                None,
@@ -62,4 +67,20 @@ async def get_author_subject_area(query: BaseQuery):
                                result[0].get('author'),
                                result[0].get('url')
                                ))
+    query_id = int(query.query_id)
+    send_data = dict(query_id = query_id, user_type = "scopus")
+  
+    # url = f'{settings.finish_end_point}/finish/scopus_search'
+    
+    # ! Test
+    url = f'{settings.finish_end_point}/dblp/test_router'
+
+    async with aiohttp.ClientSession() as session:
+        async with session.post(url=url, json = send_data) as response:
+            ...
     return results
+
+
+@dblp_router.post(path="/test_router")
+async def test_router(data: dict):
+    print(data)
