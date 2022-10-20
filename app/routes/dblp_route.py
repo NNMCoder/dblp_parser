@@ -70,10 +70,10 @@ async def get_author_subject_area(query: BaseQuery):
     query_id = int(query.query_id)
     send_data = dict(query_id = query_id, user_type = "scopus")
   
-    # url = f'{settings.finish_end_point}/finish/scopus_search'
+    url = f'{settings.finish_end_point}/finish/scopus_search'
     
     # ! Test
-    url = f'{settings.finish_end_point}/dblp/test_router'
+    # url = f'{settings.finish_end_point}/dblp/test_router'
 
     async with aiohttp.ClientSession() as session:
         async with session.post(url=url, json = send_data) as response:
